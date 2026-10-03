@@ -1,0 +1,37 @@
+{
+  "mask_source": "author_supplied_paper_example",
+  "purpose": "Illustrate the paper input/output format and ROI construction",
+  "crop_rule": "Tight bounding rectangle of the same-side ilium-sacrum union; no padding",
+  "crop_boxes_xyxy_exclusive": {
+    "left": [
+      173,
+      254,
+      238,
+      328
+    ],
+    "right": [
+      295,
+      251,
+      353,
+      327
+    ]
+  },
+  "files": {
+    "LI": {
+      "file": "output/masks/input_LI.png",
+      "sha256": "f2243499d4ccd82519a6747d164800d1159751c3978eaaee4d74a218f12bfc04"
+    },
+    "LS": {
+      "file": "output/masks/input_LS.png",
+      "sha256": "5a4b8fcde5e14aff59dced81d94d3bc51cc693d182d984959c0f10ca50e23f49"
+    },
+    "RI": {
+      "file": "output/masks/input_RI.png",
+      "sha256": "e84adca21ceb0dc6f1cd6e9693b97b1ad77443873c7870a9b244398a415ff9e7"
+    },
+    "RS": {
+      "file": "output/masks/input_RS.png",
+      "sha256": "6936b15d73a1fda17f1cdecfff7c65fef5e709306a6a8dc6adc845004afeea8a"
+    }
+  }
+}

@@ -1,0 +1,2 @@
+patient_id,case_id,slice_id,slice_order,image_path
+example,example,1,1,input.png

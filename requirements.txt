@@ -1,0 +1,11 @@
+torch==2.5.1
+torchvision==0.20.1
+numpy>=1.24,<3
+pandas>=2.0,<3
+opencv-python>=4.8,<5
+Pillow>=9.1,<13
+
+# Original grading training recipe (exact historical versions were not recorded).
+albumentations>=2.0,<3
+scikit-learn>=1.3,<2
+scipy>=1.10,<2
