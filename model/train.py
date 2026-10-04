@@ -24,8 +24,6 @@ labels csv 中包含：filename,left,right
 - outputs/grading_weights/dualfuse_band_right_best.pth
 - outputs/grading_weights/dualfuse_band_left_final.pth
 - outputs/grading_weights/dualfuse_band_right_final.pth
-- outputs/grading_weights/dualfuse_band_left_swa.pth
-- outputs/grading_weights/dualfuse_band_right_swa.pth
 - outputs/grading_weights/cm_resnet18dualfuse_band/*.csv
 """
 
@@ -99,7 +97,6 @@ class Config:
     num_workers: int = 4
 
     num_epochs: int = 100
-    patience: int = 25
     lr: float = 2e-4
     weight_decay: float = 1e-4
     num_classes: int = 5
@@ -1457,11 +1454,9 @@ def train_one_side(side: str, cfg: Config):
 
     # Save the first evaluated model even when validation accuracy is zero.
     best_acc = -1.0
-    stop_counter = 0
 
     ckpt_best = os.path.join(cfg.model_dir, f"dualfuse_band_{side}_best.pth")
     ckpt_final = os.path.join(cfg.model_dir, f"dualfuse_band_{side}_final.pth")
-    ckpt_swa = os.path.join(cfg.model_dir, f"dualfuse_band_{side}_swa.pth")
 
     for epoch in range(1, cfg.num_epochs + 1):
         model.train()
@@ -1601,23 +1596,11 @@ def train_one_side(side: str, cfg: Config):
             best_acc = va_acc
             save_ema_state_dict(model, ema, ckpt_best, backup)
             print(f" ↳ [{side}] best 更新: val_acc={va_acc:.4f}")
-            stop_counter = 0
-        else:
-            stop_counter += 1
-            if stop_counter >= cfg.patience:
-                print(f" ↳ EarlyStopping 触发（{cfg.patience} epoch 无提升）")
-                break
 
     torch.save(model.state_dict(), ckpt_final)
     print(f"[{side}] Final 已保存: {ckpt_final}")
 
-    if cfg.use_swa and swa_model is not None and int(swa_model.n_averaged.item()) > 0:
-        update_bn_dualfuse(dl_bn, swa_model, device)
-        swa_sd = swa_model.module.state_dict() if hasattr(swa_model, "module") else swa_model.state_dict()
-        torch.save(swa_sd, ckpt_swa)
-        print(f"[{side}] SWA 已保存: {ckpt_swa}")
-    elif cfg.use_swa:
-        print(f"[{side}] SWA 尚未开始参数平均，本次不保存 SWA 权重。")
+    # SWA parameters are maintained during training; only EMA best is used for testing.
 
     state = torch.load(ckpt_best, map_location="cpu", weights_only=True)
     missing, unexpected = model.load_state_dict(state, strict=True)
@@ -1681,7 +1664,7 @@ def main():
     train_one_side("right", cfg)
 
     print("\n✅ 训练完成")
-    print("✅ best/final/swa 权重目录:", cfg.model_dir)
+    print("✅ best/final 权重目录:", cfg.model_dir)
     print("✅ 混淆矩阵目录:", cm_dir)
 
 
