@@ -21,7 +21,7 @@ These crops are derived from the [paper-example masks](../segment/README.md) usi
 python -m model.train --data-root /path/to/grading_data --output-dir outputs/grading_weights
 ```
 
-It trains independent left/right networks and saves best, final and, when averaging has started, SWA checkpoints. Best weights are selected by EMA validation accuracy. The reported SIGNet grading results use the left/right `*_best.pth` checkpoints (EMA decay 0.999). SWA checkpoints are saved separately and were not used for those reported results. Per-side validation reports are training diagnostics, not the paper's pooled test-set results.
+It trains independent left/right networks for 100 epochs without early stopping and saves EMA-best and final checkpoints. SWA parameter averaging and its learning-rate schedule start at epoch 50; SWA checkpoints are not exported. The EMA checkpoint with the highest validation accuracy is used for testing. Per-side validation reports are training diagnostics, not the paper's pooled test-set results.
 
 ## Predict
 
