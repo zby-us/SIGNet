@@ -10,7 +10,7 @@ import cv2
 import numpy as np
 import torch
 
-from segment.dataset import LEGACY_TAGS, STRUCTURES
+from segment.dataset import STRUCTURES
 from segment.predict import (
     TAGS,
     embed_half_mask,
@@ -23,8 +23,7 @@ from segment.predict import (
 from utils import read_image, write_image, write_json
 
 
-# OpenCV uses BGR colors.  These preserve the colors from the experiment
-# preview script after translating LL/LR/RL/RR to LI/LS/RS/RI.
+# OpenCV uses BGR colors for each anatomical structure.
 COLORS = {
     "LI": (0, 0, 255),
     "LS": (0, 255, 0),
@@ -42,7 +41,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--thresholds",
         default=None,
-        help="Optional LI/LS/RI/RS (or LL/LR/RL/RR) overrides",
+        help="Optional LI/LS/RI/RS overrides",
     )
     return parser.parse_args()
 
@@ -109,7 +108,6 @@ def main() -> None:
         thresholds[structure] = validate_threshold(threshold, structure)
         model_metadata[structure] = {
             **checkpoint_files[structure],
-            "legacy_tag": LEGACY_TAGS[structure],
             "side": expected_side,
             "threshold": thresholds[structure],
         }

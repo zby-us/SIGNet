@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from segment.dataset import LEGACY_TAGS, LEGACY_TO_STRUCTURE, STRUCTURES
+from segment.dataset import STRUCTURES
 from segment.model import UnetVMamba, main_logits
 from utils import checkpoint_metadata, read_image, write_image, write_json
 
@@ -20,11 +20,10 @@ TAGS = ("LI", "LS", "RI", "RS")
 
 
 def normalize_structure_name(value: str) -> str:
-    """Normalize paper or historical labels to LI/LS/RI/RS."""
+    """Validate the anatomical structure name (LI/LS/RI/RS)."""
     name = value.strip().upper()
-    name = LEGACY_TO_STRUCTURE.get(name, name)
     if name not in TAGS:
-        accepted = ", ".join((*TAGS, *LEGACY_TO_STRUCTURE))
+        accepted = ", ".join(TAGS)
         raise ValueError(f"Unknown structure label {value!r}; expected one of: {accepted}")
     return name
 
@@ -91,17 +90,16 @@ def load_model(
         )
     threshold = checkpoint.get("threshold") if isinstance(checkpoint, dict) else None
     structure = checkpoint.get("structure") if isinstance(checkpoint, dict) else None
-    legacy_tag = checkpoint.get("tag") if isinstance(checkpoint, dict) else None
-    declarations = [
-        normalize_structure_name(str(value))
-        for value in (structure, legacy_tag)
-        if value is not None
-    ]
-    if len(set(declarations)) > 1:
-        raise ValueError(
-            f"Checkpoint {path} has conflicting structure={structure!r} and tag={legacy_tag!r}"
-        )
-    normalized = declarations[0] if declarations else None
+    filename_structure = None
+    for candidate in TAGS:
+        if path.name in (f"unet_vmamba_best30_{candidate}.pt", f"unet_vmamba_{candidate}_best.pt"):
+            filename_structure = candidate
+            break
+    normalized = normalize_structure_name(str(structure)) if structure is not None else filename_structure
+    if normalized is None:
+        raise ValueError(f"Checkpoint {path} must declare structure or use a LI/LS/RI/RS filename")
+    if filename_structure is not None and normalized != filename_structure:
+        raise ValueError(f"Checkpoint {path} structure metadata conflicts with its filename")
     side = checkpoint.get("side") if isinstance(checkpoint, dict) else None
     return model.to(device).eval(), None if threshold is None else float(threshold), normalized, side
 
@@ -114,12 +112,9 @@ def resolve_structure_checkpoints(
     paths: dict[str, Path] = {}
     metadata: dict[str, dict[str, str]] = {}
     for tag in TAGS:
-        legacy = LEGACY_TAGS[tag]
         candidates = (
             root / f"unet_vmamba_best30_{tag}.pt",
             root / f"unet_vmamba_{tag}_best.pt",
-            root / f"unet_vmamba_best30_{legacy}.pt",
-            root / f"unet_vmamba_{legacy}_best.pt",
         )
         matches = [path for path in candidates if path.is_file()]
         if not matches:

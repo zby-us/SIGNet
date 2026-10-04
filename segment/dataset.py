@@ -21,12 +21,6 @@ STRUCTURES = {
     "RS": ("right", "right", "left"),
 }
 
-# Historical training tags -> paper terminology:
-# LL -> LI, LR -> LS, RL -> RS, RR -> RI.
-LEGACY_TAGS = {"LI": "LL", "LS": "LR", "RS": "RL", "RI": "RR"}
-LEGACY_TO_STRUCTURE = {legacy: structure for structure, legacy in LEGACY_TAGS.items()}
-
-
 def _read_gray(path: Path) -> np.ndarray:
     return read_image(path, cv2.IMREAD_GRAYSCALE)
 

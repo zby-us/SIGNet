@@ -11,7 +11,7 @@ from pathlib import Path
 import torch
 from torch.utils.data import DataLoader
 
-from segment.dataset import LEGACY_TAGS, STRUCTURES, StructureDataset
+from segment.dataset import STRUCTURES, StructureDataset
 from segment.losses import SegmentationObjective
 from segment.model import UnetVMamba, main_logits
 from utils import environment_metadata, seed_everything, sha256_file, write_json
@@ -80,13 +80,12 @@ def save_checkpoint(
     epoch: int,
     row: dict[str, float | int],
 ) -> None:
-    """Save both paper terminology and the historical tag for traceability."""
+    """Save the anatomical structure name and validation metadata."""
     torch.save(
         {
             "format_version": 1,
             "model": model.state_dict(),
             "structure": structure,
-            "tag": LEGACY_TAGS[structure],
             "side": STRUCTURES[structure][0],
             "epoch": int(epoch),
             "threshold": float(row["validation_threshold"]),
@@ -210,7 +209,6 @@ def train_structure(
         json.dumps(
             {
                 "structure": structure,
-                "legacy_tag": LEGACY_TAGS[structure],
                 "side": STRUCTURES[structure][0],
                 "history": history,
             },
@@ -225,7 +223,6 @@ def train_structure(
             "environment": environment_metadata(),
             "arguments": vars(args),
             "structure": structure,
-            "legacy_tag": LEGACY_TAGS[structure],
             "train_samples": len(train_set),
             "validation_samples": len(val_set),
             "best30_checkpoint_sha256": sha256_file(best30_path),
@@ -234,7 +231,6 @@ def train_structure(
     )
     return {
         "structure": structure,
-        "legacy_tag": LEGACY_TAGS[structure],
         "side": STRUCTURES[structure][0],
         "best10_dice": best[10][0],
         "best20_dice": best[20][0],
