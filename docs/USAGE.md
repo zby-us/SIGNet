@@ -8,13 +8,26 @@ Each `train/` and `val/` split contains:
 
 ```text
 images/<case>/<slice>.png
-masks_4c/left/left/<case>/<slice>_left_left.png      # LI
-masks_4c/left/right/<case>/<slice>_left_right.png    # LS
-masks_4c/right/right/<case>/<slice>_right_right.png # RI
-masks_4c/right/left/<case>/<slice>_right_left.png    # RS
+masks_4c/left/ilium/<case>/<slice>_left_ilium.png      # LI
+masks_4c/left/sacrum/<case>/<slice>_left_sacrum.png    # LS
+masks_4c/right/ilium/<case>/<slice>_right_ilium.png # RI
+masks_4c/right/sacrum/<case>/<slice>_right_sacrum.png    # RS
 ```
 
 Case subdirectories are optional, but image and mask relative paths must match.
+
+LI means left ilium, LS left sacrum, RI right ilium, and RS right sacrum.
+`STRUCTURES` stores `(stored-image half, anatomical side, bone)`:
+
+| Structure | Anatomical name | Stored-image half | Mask directory |
+|---|---|---|---|
+| LI | Left ilium | left | `masks_4c/left/ilium/` |
+| LS | Left sacrum | left | `masks_4c/left/sacrum/` |
+| RI | Right ilium | right | `masks_4c/right/ilium/` |
+| RS | Right sacrum | right | `masks_4c/right/sacrum/` |
+
+Mask directories and filename suffixes use anatomical side and bone names. Prepare both the target bone and its same-side companion mask using the paths above. Preserve the supplied image orientation; displayed image left/right alone does not establish patient laterality.
+
 
 ```bash
 python -m segment.train --data-root /path/to/segmentation_data --output-dir outputs/segment_weights
