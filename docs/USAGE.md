@@ -90,8 +90,4 @@ The grading training entry saves `dualfuse_band_left_best.pth` and `dualfuse_ban
 
 ## Preprocessing
 
-Generate the SDT and the boundary band at the original ROI size. The band uses a 3x3 morphological gradient and a 7x7 elliptical dilation. Preserve uint8 SDT quantization, stack ROI/mask/SDT/band, linearly resize all channels together to 224x224, then normalize. No fixed CLAHE or contrast multiplier is applied. Inference averages original and horizontally flipped logits.
-
-## Validation status
-
-Local checks cover selected components and input validation. All four supplied segmentation checkpoints passed strict parameter loading, finite-value checks and a 512x256 forward pass. A single CT slice has also been processed with the final four segmentation checkpoints. The displayed paper example separately uses author-supplied masks; its ROI images and ROI masks are derived from those supplied masks and checked for alignment. These supplied masks are not presented as outputs from that checkpoint test. Full training and complete real-data grading evaluation have not been verified. Exact historical augmentation-library versions are unavailable; dependency compatibility remains to be checked. This repository does not claim verified numerical reproduction of all paper tables.
+Generate the SDT and boundary band from the ROI mask at the original ROI size. Construct the boundary band using a 3×3 morphological gradient followed by dilation with a 7×7 elliptical kernel. Quantize the SDT to uint8, stack the ROI, mask, SDT and boundary-band channels, resize them together to 224×224 using bilinear interpolation, and normalize. During inference, average the logits from the original and horizontally flipped inputs.
