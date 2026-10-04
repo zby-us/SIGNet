@@ -331,61 +331,21 @@ def compute_metrics_once(gts, preds, probs, K, allow_auc=True):
     return out
 
 
-def bootstrap_ci(gts, preds, probs, K, n_boot=500, seed=123, allow_auc=True):
-    rng = np.random.default_rng(seed)
-    N = len(gts)
-    keys = ["AUC", "Accuracy", "Recall", "Specificity", "Precision", "F1", "MCC"]
-    samples = {k: [] for k in keys}
-
-    gts = np.asarray(gts)
-    preds = np.asarray(preds)
-    probs_arr = None if probs is None else np.asarray(probs)
-
-    for _ in range(n_boot):
-        idx = rng.integers(0, N, size=N)
-        g_b = gts[idx]
-        p_b = preds[idx]
-        pr_b = None if probs_arr is None else probs_arr[idx]
-        m = compute_metrics_once(g_b, p_b, pr_b, K, allow_auc=allow_auc)
-        for k in keys:
-            if np.isfinite(m[k]):
-                samples[k].append(m[k])
-
-    ci = {}
-    for k in keys:
-        arr = np.asarray(samples[k], dtype=np.float64)
-        if len(arr) < max(10, int(n_boot * 0.1)):
-            ci[k] = (np.nan, np.nan)
-        else:
-            lo, hi = np.quantile(arr, [0.025, 0.975])
-            ci[k] = (float(lo), float(hi))
-    return ci
-
-
-def _fmt(v, ci_pair):
-    lo, hi = ci_pair
-    if not np.isfinite(v):
-        return "nan (nan–nan)"
-    if np.isfinite(lo) and np.isfinite(hi):
-        return f"{v:.3f} ({lo:.3f}–{hi:.3f})"
-    return f"{v:.3f} (nan–nan)"
-
-
-def print_eval_table(title: str, metrics: dict, ci: dict):
+def print_eval_table(title: str, metrics: dict):
     print("\n" + "=" * 70)
     print(title)
     print("=" * 70)
     rows = [
-        ("AUC (95% CI)", "AUC"),
-        ("Accuracy (95% CI)", "Accuracy"),
-        ("Recall (95% CI)", "Recall"),
-        ("Specificity (95% CI)", "Specificity"),
-        ("Precision (95% CI)", "Precision"),
-        ("F1-score (95% CI)", "F1"),
-        ("MCC (95% CI)", "MCC"),
+        ("AUC", "AUC"),
+        ("Accuracy", "Accuracy"),
+        ("Recall", "Recall"),
+        ("Specificity", "Specificity"),
+        ("Precision", "Precision"),
+        ("F1-score", "F1"),
+        ("MCC", "MCC"),
     ]
-    for name, k in rows:
-        print(f"{name:<22} {_fmt(metrics[k], ci[k])}")
+    for name, key in rows:
+        print(f"{name:<22} {metrics[key]:.3f}")
     print("=" * 70 + "\n")
 
 
@@ -1616,12 +1576,7 @@ def train_one_side(side: str, cfg: Config):
     metrics = compute_metrics_once(
         va_gts, va_preds, va_probs, cfg.num_classes, allow_auc=allow_auc
     )
-    ci = bootstrap_ci(
-        va_gts, va_preds, va_probs, cfg.num_classes,
-        n_boot=300, seed=cfg.seed + 7, allow_auc=allow_auc
-    )
-
-    print_eval_table(f"[{side}] VAL Metrics", metrics, ci)
+    print_eval_table(f"[{side}] VAL Metrics", metrics)
 
     rep = classification_report(
         va_gts, va_preds, labels=list(range(cfg.num_classes)), digits=4
