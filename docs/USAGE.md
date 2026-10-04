@@ -60,7 +60,7 @@ The manifest lists original image paths relative to the input root. Each entry r
 
 ## Weights and naming
 
-Segmentation checkpoint names use `unet_vmamba_best30_LI.pt`, `LS.pt`, `RI.pt`, and `RS.pt`. Historical suffixes are also accepted: LL → LI, LR → LS, RR → RI, RL → RS. Each checkpoint must correspond to its own structure. Saved validation thresholds are read automatically; legacy parameter-only checkpoints require explicit validation-selected `--thresholds` values.
+Segmentation checkpoint names use `unet_vmamba_best30_LI.pt`, `LS.pt`, `RI.pt`, and `RS.pt`. Each checkpoint must correspond to its own structure. The loader checks `structure` metadata when present and otherwise uses the anatomical filename; `side` metadata is checked when available. Saved validation thresholds are read automatically; legacy parameter-only checkpoints require explicit validation-selected `--thresholds` values.
 
 See [segmentation weights](../segment/README.md). Keep the original filenames in one local folder.
 
