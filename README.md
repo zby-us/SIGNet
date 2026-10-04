@@ -41,4 +41,4 @@ python main.py --input-dir /path/to/images --slice-manifest /path/to/slice_manif
 
 Please cite **SIGNet: A Hierarchical Deep Learning Framework for CT-Based Sacroiliitis Grading** when using this work. Full bibliographic details will be added when available.
 
-This code is intended for research. See [validation status](docs/USAGE.md#validation-status).
+This code is intended for research.
