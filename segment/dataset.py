@@ -14,11 +14,16 @@ from torch.utils.data import Dataset
 from utils import read_image
 
 
+# Anatomical names: LI = left ilium; LS = left sacrum;
+# RI = right ilium; RS = right sacrum.
+# Each tuple is (stored-image half, anatomical side, bone).
+# Mask paths: masks_4c/<anatomical_side>/<bone>/<case>/<stem>_<anatomical_side>_<bone>.png.
+# Image halves follow the supplied dataset orientation.
 STRUCTURES = {
-    "LI": ("left", "left", "left"),
-    "LS": ("left", "left", "right"),
-    "RI": ("right", "right", "right"),
-    "RS": ("right", "right", "left"),
+    "LI": ("left", "left", "ilium"),
+    "LS": ("left", "left", "sacrum"),
+    "RI": ("right", "right", "ilium"),
+    "RS": ("right", "right", "sacrum"),
 }
 
 def _read_gray(path: Path) -> np.ndarray:
@@ -123,7 +128,7 @@ def _rectangle(mask: np.ndarray, padding: int = 14) -> np.ndarray:
 
 
 class StructureDataset(Dataset):
-    """Load one of LI/LS/RI/RS using the source masks_4c directory convention."""
+    """Load one of LI/LS/RI/RS using anatomical side/bone mask directories."""
 
     def __init__(self, split_root: str | Path, structure: str, train: bool = False) -> None:
         if structure not in STRUCTURES:
@@ -143,7 +148,7 @@ class StructureDataset(Dataset):
     def __len__(self) -> int:
         return len(self.images)
 
-    def _mask_path(self, relative_image: Path, first: str, second: str) -> Path:
+    def _mask_path(self, relative_image: Path, anatomical_side: str, bone: str) -> Path:
         """Resolve a mask without discarding the patient/case subdirectory.
 
         Preprocessed slices are stored as ``<case_id>/<slice>.png``.  Keeping
@@ -153,22 +158,22 @@ class StructureDataset(Dataset):
         return (
             self.root
             / "masks_4c"
-            / first
-            / second
+            / anatomical_side
+            / bone
             / relative_image.parent
-            / f"{relative_image.stem}_{first}_{second}.png"
+            / f"{relative_image.stem}_{anatomical_side}_{bone}.png"
         )
 
     def __getitem__(self, index: int) -> dict[str, torch.Tensor | str]:
         image_path = self.images[index]
         relative_image = image_path.relative_to(self.root / "images")
-        side, first, second = STRUCTURES[self.structure]
-        other = "right" if second == "left" else "left"
+        side, anatomical_side, bone = STRUCTURES[self.structure]
+        other = "sacrum" if bone == "ilium" else "ilium"
 
         # 读取完整 512x512 CT 及当前结构、同侧伴随结构的参考掩膜。
         image = _resize_image(_read_gray(image_path), self.full_shape)
-        target = _resize_mask(_read_gray(self._mask_path(relative_image, first, second)), self.full_shape)
-        companion = _resize_mask(_read_gray(self._mask_path(relative_image, first, other)), self.full_shape)
+        target = _resize_mask(_read_gray(self._mask_path(relative_image, anatomical_side, bone)), self.full_shape)
+        companion = _resize_mask(_read_gray(self._mask_path(relative_image, anatomical_side, other)), self.full_shape)
         union = np.maximum(target, companion)
 
         # 按解剖中线切成左、右两个 512x256 半幅图像。
