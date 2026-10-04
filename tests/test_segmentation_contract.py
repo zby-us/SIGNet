@@ -20,10 +20,12 @@ from segment.predict import (
 
 class SegmentationContractTests(unittest.TestCase):
     def test_structure_mask_directories(self) -> None:
-        self.assertEqual(STRUCTURES["LI"], ("left", "left", "left"))
-        self.assertEqual(STRUCTURES["LS"], ("left", "left", "right"))
-        self.assertEqual(STRUCTURES["RS"], ("right", "right", "left"))
-        self.assertEqual(STRUCTURES["RI"], ("right", "right", "right"))
+        # Tuples encode stored-image half, anatomical side and bone.
+        # LI: left ilium; LS: left sacrum; RS: right sacrum; RI: right ilium.
+        self.assertEqual(STRUCTURES["LI"], ("left", "left", "ilium"))
+        self.assertEqual(STRUCTURES["LS"], ("left", "left", "sacrum"))
+        self.assertEqual(STRUCTURES["RS"], ("right", "right", "sacrum"))
+        self.assertEqual(STRUCTURES["RI"], ("right", "right", "ilium"))
 
     def test_model_retains_checkpoint_auxiliary_heads(self) -> None:
         model = UnetVMamba(base_channels=2, drop_path_rate=0.0).eval()
